@@ -16,15 +16,14 @@ async def update_redis():
         rate = int(REDIS.get(REDIS_RATE) or 0)
         threshold = int(REDIS.get(REDIS_THRESHOLD) or 0)
         current = int(REDIS.get(REDIS_TARGET) or 0)
+        status_line = 'Rate: {0: >10}/s | Limit: {1: >10} | Current: {2: >10}'
+        status_line = status_line.format(rate, threshold, current)
 
         if rate > 0:
             if current + rate < threshold:
                 REDIS.incrby(REDIS_TARGET, rate)
-                print('Incrementing by {}. Current is {}. Limit is {}.'.format(rate, current, threshold))
-            else:
-                print('Not incrementing, would cross threshold.')
-        elif rate == 0:
-            print('Not incrementing, rate is 0.')
+                current += rate
+        print(status_line)
         await asyncio.sleep(1)
 
 
