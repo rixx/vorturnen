@@ -13,7 +13,6 @@ REDIS_THRESHOLD = 'dreh.THRESHOLD'
 
 @asyncio.coroutine
 def update_redis():
-    global REDIS
     while True:
         rate = int(REDIS.get(REDIS_RATE) or 0)
         threshold = int(REDIS.get(REDIS_THRESHOLD) or 0)
@@ -30,8 +29,6 @@ def update_redis():
 
 
 def get_user_input():
-    global REDIS
-
     command = sys.stdin.readline().strip()
     if command.startswith('t '):
         try:
