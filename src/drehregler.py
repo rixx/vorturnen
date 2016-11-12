@@ -1,3 +1,11 @@
+#!/usr/bin/env python3.5
+"""
+An example script combining polling-like background tasks and user interaction
+via Python3.5 asyncio. See drehregler-legacy.py for Python3.4.
+
+Global data is saved inside the redis, because if you have a data store, you
+might as well use it.
+"""
 import asyncio
 import sys
 
@@ -11,6 +19,9 @@ REDIS_THRESHOLD = 'dreh.THRESHOLD'
 
 
 async def update_redis():
+    """
+    Update the redis value in 1s intervals.
+    """
     while True:
         rate = int(REDIS.get(REDIS_RATE) or 0)
         threshold = int(REDIS.get(REDIS_THRESHOLD) or 0)
@@ -27,6 +38,9 @@ async def update_redis():
 
 
 def get_user_input():
+    """
+    Read, clean and process user input.
+    """
     command = sys.stdin.readline().strip()
     if command.startswith('t '):
         try:
