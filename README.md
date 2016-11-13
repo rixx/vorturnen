@@ -6,4 +6,4 @@ framework.
 # Index
 
 `drehregler.py`: Increment values (here: in redis) up to a threshold, finding rate and threshold via user input. Uses
-Python3, redis, asyncio.
+Python3, redis, asyncio, curses.
