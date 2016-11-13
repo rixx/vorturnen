@@ -7,6 +7,7 @@ Global data is saved inside the redis, because if you have a data store, you
 might as well use it.
 """
 import asyncio
+import curses
 import sys
 
 import redis
@@ -16,6 +17,7 @@ REDIS = None
 REDIS_RATE = 'dreh.PER_SECOND'
 REDIS_TARGET = 'MAXUSERS'
 REDIS_THRESHOLD = 'dreh.THRESHOLD'
+WINDOW = None
 
 
 async def update_redis():
@@ -33,7 +35,9 @@ async def update_redis():
             if current + rate < threshold:
                 REDIS.incrby(REDIS_TARGET, rate)
                 current += rate
-        print(status_line)
+        WINDOW.addstr(0, 0, status_line)
+        WINDOW.move(1, 2)
+        WINDOW.refresh()
         await asyncio.sleep(1)
 
 
@@ -41,29 +45,44 @@ def get_user_input():
     """
     Read, clean and process user input.
     """
-    command = sys.stdin.readline().strip()
+    def print_user_line(msg):
+        WINDOW.addstr(2, 0, msg)
+        WINDOW.clrtoeol()
+
+    command = WINDOW.getstr(1, 2).decode()
     if command.startswith('t '):
         try:
             threshold = int(command[2:])
             REDIS.set(REDIS_THRESHOLD, threshold)
-            print('Moved threshold to {}'.format(threshold))
-        except:
-            print('Could not parse threshold value.')
+            print_user_line('Updated threshold to {}.'.format(threshold))
+        except Exception as e:
+            print_user_line('Could not parse threshold value "{}": {}'.format(command[2:], str(e)))
     elif command.startswith('r '):
         try:
             rate = int(command[2:])
             REDIS.set(REDIS_RATE, rate)
-            print('Moved rate to {}'.format(rate))
+            print_user_line('Updated rate to {}.'.format(rate))
         except Exception as e:
-            print('Could not parse rate value "{}": {}'.format(command[2:], str(e)))
+            print_user_line('Could not parse rate value "{}": {}'.format(command[2:], str(e)))
+    elif command.startswith('quit'):
+        raise KeyboardInterrupt
     else:
-        print('Enter `t <value>` to change threshold and `r <value>` to modify the change rate.')
+        print_user_line('`t <threshold>` | `r <rate>` | `quit`')
+
+    WINDOW.move(1, 2)
+    WINDOW.clrtoeol()
+    WINDOW.refresh()
 
 
 if __name__ == '__main__':
     REDIS = redis.StrictRedis(host='localhost', port=6379, db=0)
     REDIS.set(REDIS_RATE, 0)
     REDIS.set(REDIS_THRESHOLD, 100)
+    WINDOW = curses.initscr()
+    WINDOW.addstr(1, 0, '>')
+    WINDOW.addstr(2, 0, '`t <threshold>` | `r <rate>` | `quit`')
+    WINDOW.move(1, 2)
+    WINDOW.refresh()
 
     loop = asyncio.get_event_loop()
     loop.add_reader(sys.stdin, get_user_input)
@@ -75,3 +94,4 @@ if __name__ == '__main__':
         pass
 
     loop.close()
+    curses.endwin()
