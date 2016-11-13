@@ -14,9 +14,11 @@ import redis
 
 
 REDIS = None
+REDIS_CURRENT = 'QUEUEPOS'
 REDIS_RATE = 'dreh.PER_SECOND'
 REDIS_TARGET = 'MAXUSERS'
 REDIS_THRESHOLD = 'dreh.THRESHOLD'
+STATUS_LINE = 'Rate: {0: >10}/s | Limit: {1: >10} | Current limit: {2: >10} | Current requests: {2: >10}'
 WINDOW = None
 
 
@@ -28,11 +30,11 @@ async def update_redis():
         rate = int(REDIS.get(REDIS_RATE) or 0)
         threshold = int(REDIS.get(REDIS_THRESHOLD) or 0)
         current = int(REDIS.get(REDIS_TARGET) or 0)
-        status_line = 'Rate: {0: >10}/s | Limit: {1: >10} | Current: {2: >10}'
-        status_line = status_line.format(rate, threshold, current)
+        waiting = int(REDIS.get(REDIS_CURRENT) or 0)
+        status_line = STATUS_LINE.format(rate, threshold, current, waiting)
 
         if rate > 0:
-            if current + rate < threshold:
+            if current + rate <= threshold:
                 REDIS.incrby(REDIS_TARGET, rate)
                 current += rate
         WINDOW.addstr(0, 0, status_line)
