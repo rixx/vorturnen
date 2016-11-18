@@ -52,20 +52,20 @@ def get_user_input():
         WINDOW.clrtoeol()
 
     command = WINDOW.getstr(1, 2).decode()
-    if command.startswith('t '):
+    if command.startswith('t ') or command.startswith('r '):
+        remainder = command[2:].strip()
+        offset = remainder.startswith('+')
+        remainder = remainder[1:] if offset else remainder
+
         try:
-            threshold = int(command[2:])
-            REDIS.set(REDIS_THRESHOLD, threshold)
-            print_user_line('Updated threshold to {}.'.format(threshold))
+            value = int(remainder)
         except Exception as e:
-            print_user_line('Could not parse threshold value "{}": {}'.format(command[2:], str(e)))
-    elif command.startswith('r '):
-        try:
-            rate = int(command[2:])
-            REDIS.set(REDIS_RATE, rate)
-            print_user_line('Updated rate to {}.'.format(rate))
-        except Exception as e:
-            print_user_line('Could not parse rate value "{}": {}'.format(command[2:], str(e)))
+            print_user_line('Could not parse value "{}": {}'.format(command[2:], str(e)))
+
+        key = REDIS_THRESHOLD if command.startswith('t') else REDIS_RATE
+        value += REDIS.get(key) if offset else 0
+        REDIS.set(key, value)
+        print_user_line('Updated value to {}.'.format(value))
     elif command.startswith('quit'):
         raise KeyboardInterrupt
     else:
