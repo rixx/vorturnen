@@ -18,7 +18,7 @@ REDIS_CURRENT = 'QUEUEPOS'
 REDIS_RATE = 'dreh.PER_SECOND'
 REDIS_TARGET = 'MAXUSERS'
 REDIS_THRESHOLD = 'dreh.THRESHOLD'
-STATUS_LINE = 'Rate: {0: >10}/s | Limit: {1: >10} | Current limit: {2: >10} | Current requests: {2: >10}'
+STATUS_LINE = 'Rate: {0: >10}/s | Limit: {1: >10} | Current limit: {2: >10} | Current requests: {3: >10}'
 WINDOW = None
 
 
