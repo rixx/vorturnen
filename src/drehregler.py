@@ -26,17 +26,22 @@ async def update_redis():
     """
     Update the redis value in 1s intervals.
     """
+    remainder = 0
     while True:
-        rate = int(REDIS.get(REDIS_RATE) or 0)
-        threshold = int(REDIS.get(REDIS_THRESHOLD) or 0)
+        rate = float(REDIS.get(REDIS_RATE).decode() or 0)
+        threshold = int(float(REDIS.get(REDIS_THRESHOLD) or 0))
         current = int(REDIS.get(REDIS_TARGET) or 0)
         waiting = int(REDIS.get(REDIS_CURRENT) or 0)
         status_line = STATUS_LINE.format(rate, threshold, current, waiting)
 
         if rate > 0:
             if current + rate <= threshold:
-                REDIS.incrby(REDIS_TARGET, rate)
-                current += rate
+                incrby = int(rate)
+                remainder += rate - incrby
+                if remainder >= 1:
+                    incrby += int(remainder)
+                    remainder = remainder - int(remainder)
+                REDIS.incrby(REDIS_TARGET, incrby)
         WINDOW.addstr(0, 0, status_line)
         WINDOW.move(1, 2)
         WINDOW.refresh()
@@ -58,14 +63,14 @@ def get_user_input():
         remainder = remainder[1:] if offset else remainder
 
         try:
-            value = int(remainder)
+            value = float(remainder)
         except Exception as e:
             print_user_line('Could not parse value "{}": {}'.format(command[2:], str(e)))
 
         key = REDIS_THRESHOLD if command.startswith('t') else REDIS_RATE
-        value += REDIS.get(key) if offset else 0
-        REDIS.set(key, value)
-        print_user_line('Updated value to {}.'.format(value))
+        value += float(REDIS.get(key)) if offset else 0
+        REDIS.set(key, str(value))
+        print_user_line('Updated {} to {}.'.format(key, value))
     elif command.startswith('quit'):
         raise KeyboardInterrupt
     else:
