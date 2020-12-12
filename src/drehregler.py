@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
     loop = asyncio.get_event_loop()
     loop.add_reader(sys.stdin, get_user_input)
-    update_task = asyncio.async(update_redis())
+    update_task = asyncio.ensure_future(update_redis())
 
     try:
         loop.run_forever()
